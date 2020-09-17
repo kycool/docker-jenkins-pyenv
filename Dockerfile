@@ -10,6 +10,9 @@ ENV LANG="C.UTF-8" \
     PYENV_SHELL="bash" \
     TBPYTHON="https://npm.taobao.org/mirrors/python"
 
+# 解决 source not found in docker 的问题
+RUN ln -sf  /bin/bash /bin/sh
+
 # 替换源，使用阿里源
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.old
 RUN sed -i "s/deb.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list
