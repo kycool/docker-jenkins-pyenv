@@ -11,18 +11,14 @@ ENV LANG="C.UTF-8" \
     TBPYTHON="https://npm.taobao.org/mirrors/python"
 
 # 解决 source not found in docker 的问题
-RUN ln -sf  /bin/bash /bin/sh
-
 # 替换源，使用阿里源
-RUN cp /etc/apt/sources.list /etc/apt/sources.list.old
-RUN sed -i "s/deb.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list
-RUN sed -i "s/security.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list
-
-
-RUN apt-get clean && apt-get update
+RUN ln -sf  /bin/bash /bin/sh \
+    && cp /etc/apt/sources.list /etc/apt/sources.list.old \
+    && sed -i "s/deb.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list \
+    && sed -i "s/security.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list
 
 # 安装各种依赖
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get clean && apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
     curl \
@@ -42,13 +38,16 @@ RUN apt-get install -y --no-install-recommends \
     tk-dev \
     wget \
     xz-utils \
-    zlib1g-dev
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # 拷贝 pyenv 版本文案和需要安装的 python 版本文件
 COPY pyenv-version.txt python-versions.txt /
 
-# clone pyenv
-RUN git clone -b `cat /pyenv-version.txt` --single-branch --depth 1 https://github.com/pyenv/pyenv.git $PYENV_ROOT
-
-# 安装各种版本的 python
-RUN for v in `cat /python-versions.txt`; do wget $TBPYTHON/$v/Python-$v.tar.xz -P $PYENV_ROOT/cache/ && pyenv install $v; done
+# clone pyenv，安装各种版本的 python
+RUN git clone -b `cat /pyenv-version.txt` --single-branch --depth 1 https://github.com/pyenv/pyenv.git $PYENV_ROOT \
+    && for v in `cat /python-versions.txt`; do wget $TBPYTHON/$v/Python-$v.tar.xz -P $PYENV_ROOT/cache/ && pyenv install $v; done \
+    && pyenv global `cat /python-versions.txt` \
+    && find $PYENV_ROOT/versions -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rf '{}' + \
+    && find $PYENV_ROOT/versions -type f '(' -name '*.pyo' -o -name '*.exe' ')' -exec rm -f '{}' + \
+    && rm -rf /tmp/*
