@@ -12,3 +12,5 @@
 ```shell
 export PATH=/opt/pyenv/shims:/opt/pyenv/bin:$PATH
 ```
+
+或者使用绝对路径进行使用 `pyenv`
